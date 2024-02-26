@@ -1,0 +1,260 @@
+########## flr 1 network ##########
+
+!!creating vlans
+en
+conf t
+hostname flr-1-switch
+vlan 10
+name accounting-office
+vlan 20
+name cash office
+vlan 30
+
+
+!!assigning interface to vlans
+en
+conf t
+int range fa0/1 - 12
+switchport mode access
+switchport access vlan 10
+switchport voice vlan 30
+int range fa0/13-23
+switchport mode access
+switchport access vlan 20
+switchport voice vlan 30
+ex
+do show vlan
+
+
+!!exclude ip address in router
+en
+conf t
+hostname flr-1-router
+ip dhcp excluded-address 192.168.10.1 192.168.10.50
+ip dhcp excluded-address 192.168.20.1 192.168.20.50
+ip dhcp excluded-address 192.168.30.1 192.168.30.50
+
+
+!!creating dhcp
+en
+conf t
+ip dhcp pool v10
+network 192.168.10.0 255.255.255.0
+default-router 192.168.10.1
+ip dhcp pool v20
+network 192.168.20.0 255.255.255.0
+default-router 192.168.20.1
+ip dhcp pool v30
+network 192.168.30.0 255.255.255.0
+default-router 192.168.30.1
+option 150 ip 192.168.30.1
+ex
+do show ip dhcp pool
+
+
+!!assigning ip to intervlan
+en
+conf t
+int fa0/0
+no shutdown
+int fa0/0.10
+encapsulation dot1Q 10
+ip address 192.168.10.1 255.255.255.0
+int fa0/0.20
+encapsulation dot1Q 20
+ip address 192.168.20.1 255.255.255.0
+int fa0/0.30
+encapsulation dot1Q 30
+ip address 192.168.30.1 255.255.255.0
+
+
+!!trunking switch interface
+en
+conf t
+int fa0/24
+switchport trunk encapsulation dot1q 
+switchport mode trunk
+
+
+!!configuring telephony service
+en
+conf t
+telephony-service
+auto assign 1 to 10
+auto-reg-ephone
+max-dn 6
+max-ephone 10
+ip source-address 192.168.30.1 port 2000
+keepalive 60
+create cnf-files
+
+
+!!setting numbers in ipphone
+en
+conf t
+ephone-dn 1
+number 1001
+ephone-dn 2
+number 1002
+ephone-dn 3
+number 1003
+ephone-dn 4
+number 1004
+
+
+!!assigning ip in serial
+en
+conf t
+int se0/3/0
+no sh
+ip add 10.10.1.1 255.255.255.252
+
+
+!!rip routing
+en
+conf t
+router rip
+network 10.10.1.0
+network 192.168.10.0
+network 192.168.20.0
+network 192.168.30.0
+
+
+!!dial-peering
+en
+conf t
+dial-peer voice 1 voip
+destination-pattern 2...
+session target ipv4:10.10.1.2
+
+
+
+########## flr 2 network ##########
+
+!!creating vlans
+en
+conf t
+hostname flr-2-switch
+vlan 40
+name IT-dept
+vlan 50
+name Admin-office
+vlan 60
+ex
+do sh vlan
+
+
+!!assigning interface to vlans
+en
+conf t
+int range fa0/1 - 12
+switchport mode access
+switchport access vlan 40
+switchport voice vlan 60
+int range fa0/13-23
+switchport mode access
+switchport access vlan 50
+switchport voice vlan 60
+ex
+do show vlan
+
+
+!!trunking switch interface
+en
+conf t
+int fa0/24
+switchport trunk encapsulation dot1q 
+switchport mode trunk
+
+
+!!exclude ip address in router
+en
+conf t
+hostname flr-1-router
+ip dhcp excluded-address 192.168.40.1 192.168.40.50
+ip dhcp excluded-address 192.168.50.1 192.168.50.50
+ip dhcp excluded-address 192.168.60.1 192.168.60.50
+
+
+!!creating dhcp
+en
+conf t
+ip dhcp pool v40
+network 192.168.40.0 255.255.255.0
+default-router 192.168.40.1
+ip dhcp pool v50
+network 192.168.50.0 255.255.255.0
+default-router 192.168.50.1
+ip dhcp pool v60
+network 192.168.60.0 255.255.255.0
+default-router 192.168.60.1
+option 150 ip 192.168.60.1
+ex
+do show ip dhcp pool
+
+
+!!assigning ip to intervlan
+en
+conf t
+int fa0/0
+no shutdown
+int fa0/0.40
+encapsulation dot1Q 40
+ip address 192.168.40.1 255.255.255.0
+int fa0/0.50
+encapsulation dot1Q 50
+ip address 192.168.50.1 255.255.255.0
+int fa0/0.60
+encapsulation dot1Q 60
+ip address 192.168.60.1 255.255.255.0
+
+
+!!configuring telephony service
+en
+conf t
+telephony-service
+auto assign 1 to 10
+auto-reg-ephone
+max-dn 6
+max-ephone 10
+ip source-address 192.168.60.1 port 2000
+keepalive 60
+create cnf-files
+
+
+!!setting numbers in ipphone
+en
+conf t
+ephone-dn 1
+number 2001
+ephone-dn 2
+number 2002
+ephone-dn 3
+number 2003
+ephone-dn 4
+number 2004
+
+
+!!assigning ip in serial
+en
+conf t
+int se0/3/0
+no sh
+ip add 10.10.1.2 255.255.255.252
+
+
+!!rip routing
+en
+conf t
+router rip
+network 10.10.1.0
+network 192.168.40.0
+network 192.168.50.0
+network 192.168.60.0
+
+!!dial-peering
+en
+conf t
+dial-peer voice 1 voip
+destination-pattern 1...
+session target ipv4:10.10.1.1
